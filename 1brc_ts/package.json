@@ -1,11 +1,11 @@
 {
   "name": "1brc_ts",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "index.ts",
   "license": "MIT",
   "scripts": {
-    "start": "node --loader ts-node/esm src/index.ts",
-    "test": "jest src/"
+    "start": "bun src/index.ts",
+    "test": "bun test"
   },
   "type": "module",
   "dependencies": {
