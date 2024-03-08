@@ -20,6 +20,7 @@ interface result {
   max: number;
   mean: number;
   count: number;
+  total: number;
 }
 
 function processData(m: Map<string, result>, line: string) {
@@ -28,13 +29,14 @@ function processData(m: Map<string, result>, line: string) {
   const num = Number(data[1]);
   if (m.has(city)) {
     const entry = m.get(city) as result;
-    entry.count++;
+    entry.total += num;
+    entry.count += 1;
 
     entry.min = (num < entry.min) ? num : entry.min;
     entry.max = (num > entry.max) ? num : entry.max;
-    entry.mean = (entry.mean + num) / entry.count;
+    entry.mean = entry.total / entry.count;
   } else {
-    m.set(city, { min: num, max: num, mean: num, count: 1 });
+    m.set(city, { min: num, max: num, mean: num, count: 1, total: num });
   }
 }
 
@@ -46,7 +48,6 @@ async function compute(filePath: string): Promise<Map<string, result>> {
   return new Promise((resolve, reject) => {
     // Convert line-by-line processing into a Promise
     rl.on('line', (line) => {
-      console.log(`reading line: ${line}`);
       processData(m, line);
     });
 

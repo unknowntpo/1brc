@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "start": "bun src/index.ts",
+    "profile": "bun --inspect src/index.ts",
     "test": "bun test"
   },
   "type": "module",
