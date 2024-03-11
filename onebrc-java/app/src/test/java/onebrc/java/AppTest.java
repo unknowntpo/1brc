@@ -4,16 +4,21 @@
 package onebrc.java;
 
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.nio.file.Path;
+import java.text.MessageFormat;
 import java.util.HashMap;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class AppTest {
+    private static final Logger logger = LoggerFactory.getLogger(AppTest.class);
+
     @Test
     void appHasAGreeting() {
         App classUnderTest = new App();
@@ -35,9 +40,12 @@ class AppTest {
         Path cwd = Path.of("").toAbsolutePath();
         String filePath = cwd.toString() + "/testdata/weather_stations.csv"; // Replace with your actual file path
 
-        // Error handling in case the file doesn't exist or can't be read
-        try (FileInputStream fileInputStream = new FileInputStream(filePath)) {
-            assertEquals(app.compute(fileInputStream), want);
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            HashMap<String, Result> got = app.compute(br);
+            got.forEach((key, value) -> {
+                logger.debug(MessageFormat.format("key {0} value {1}", key, value));
+            });
+            assertEquals(want, got);
         } catch (Exception e) {
             e.printStackTrace();
         }

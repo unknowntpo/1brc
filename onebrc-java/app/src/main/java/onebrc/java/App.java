@@ -3,7 +3,9 @@
  */
 package onebrc.java;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 
@@ -16,8 +18,8 @@ public class App {
         String filePath = "../data/weather_stations.csv"; // Replace with your actual file path
 
         // Error handling in case the file doesn't exist or can't be read
-        try (FileInputStream fileInputStream = new FileInputStream(filePath)) {
-            HashMap<String, Result> result = compute(fileInputStream);
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            HashMap<String, Result> result = compute(br);
             System.out.println("Computation Result: " + result);
         } catch (IOException e) {
             System.err.println("Error reading file: " + e.getMessage());
@@ -25,23 +27,36 @@ public class App {
     }
 
     // A method to perform computation on the file contents
-    public static HashMap<String, Result> compute(FileInputStream inputStream) {
+    public static HashMap<String, Result> compute(BufferedReader stream) {
         int result = 0;
+        HashMap<String, Result> m = new HashMap<>();
 
         // Replace with your actual computation logic
         // Example: Let's sum the byte values in the file
         try {
-            int data;
-            while ((data = inputStream.read()) != -1) {
-                result += data;
+            String line;
+            while ((line = stream.readLine()) != null) {
+                String[] values = line.split(";");
+                String city = values[0];
+                float temp = Float.parseFloat(values[1]);
+                m.compute(city, (key, res) -> {
+                    if (res == null) {
+                        // If city doesn't exist, create new CityInfo
+                        return new Result(city, temp, temp, temp, 1, temp);
+                    }
+                    // If city exists, increment count and update temperature
+                    if (temp < res.getMin()) res.setMin(temp);
+                    if (temp > res.getMax()) res.setMax(temp);
+                    res.setTotal(res.getTotal() + temp);
+                    res.setCount(res.getCount() + 1);
+                    res.setMean((float) (Math.round(res.getTotal() * 10.0) / 10.0));
+                    return res;
+                });
             }
         } catch (IOException e) {
             System.err.println("Error during computation: " + e.getMessage());
         }
 
-        HashMap<String, Result> results = new HashMap();
-        results.put("Hsinchu", new Result("Hsinchu", 0, 1, 2, 3, 3));
-
-        return results;
+        return m;
     }
 }

@@ -19,6 +19,12 @@ dependencies {
     // Use JUnit Jupiter for testing.
     testImplementation(libs.junit.jupiter)
 
+    // SLF4J API
+    implementation("org.slf4j:slf4j-api:1.7.30")
+
+    // Logback Classic Implementation
+    runtimeOnly("ch.qos.logback:logback-classic:1.2.3")
+
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     // This dependency is used by the application.

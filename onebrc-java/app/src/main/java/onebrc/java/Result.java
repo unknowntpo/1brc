@@ -29,7 +29,7 @@ public class Result {
         return max;
     }
 
-    public void setMax(int max) {
+    public void setMax(float max) {
         this.max = max;
     }
 
@@ -37,7 +37,7 @@ public class Result {
         return mean;
     }
 
-    public void setMean(int mean) {
+    public void setMean(float mean) {
         this.mean = mean;
     }
 
@@ -62,7 +62,7 @@ public class Result {
         return this.total;
     }
 
-    public void setTotal(int total) {
+    public void setTotal(float total) {
         this.total = total;
     }
 }
