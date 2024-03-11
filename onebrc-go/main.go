@@ -7,6 +7,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/urfave/cli/v2"
 )
 
 func must[T any](val T, err error) T {
@@ -47,10 +49,35 @@ func compute(scanner *bufio.Scanner) (map[string]result, error) {
 }
 
 func main() {
-	filePath := "./data/weather_stations.csv"
-	f := must(os.Open(filePath))
-	defer f.Close()
-	scanner := bufio.NewScanner(bufio.NewReader(f))
-	m := must(compute(scanner))
-	fmt.Println(m)
+	app := &cli.App{
+		Name:  "1brc-go",
+		Usage: "1brc-go challange",
+		Commands: []*cli.Command{
+			{
+				Name:  "compute",
+				Usage: "Performs a computation based on the provided file",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:        "file",
+						Aliases:     []string{"f"},
+						Usage:       "Path to the file to be processed",
+						Required:    false,
+						DefaultText: "./data/weather_stations.csv",
+					},
+				},
+				Action: func(c *cli.Context) error {
+					filePath := c.String("file")
+					f := must(os.Open(filePath))
+					defer f.Close()
+					scanner := bufio.NewScanner(bufio.NewReader(f))
+					m := must(compute(scanner))
+					fmt.Println(m)
+					return nil
+				},
+			},
+		},
+	}
+	if err := app.Run(os.Args); err != nil {
+		panic(err)
+	}
 }
