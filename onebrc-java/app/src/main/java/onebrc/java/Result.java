@@ -1,5 +1,7 @@
 package onebrc.java;
 
+import java.text.MessageFormat;
+
 public class Result {
     private String city;
     private float min;
@@ -64,6 +66,18 @@ public class Result {
 
     public void setTotal(float total) {
         this.total = total;
+    }
+
+    @Override
+    public String toString() {
+        return MessageFormat.format("city: {0}, min: {1}, max: {2}, mean: {3}, count: {4}, total: {5}",
+                this.city,
+                this.min,
+                this.max,
+                this.mean,
+                this.count,
+                this.total
+        );
     }
 }
 
