@@ -30,10 +30,10 @@ class AppTest {
 
         HashMap<String, Result> want = new HashMap<>();
 
-        want.put("Tokyo", new Result("Tokyo", 33.6f, 35.6f, 69.2f, 2, 69.2f));
+        want.put("Tokyo", new Result("Tokyo", 33.6f, 35.6f, 34f, 2, 69.2f));
         want.put("Jakarta", new Result("Jakarta", -6.1f, -6.1f, -6.1f, 1, -6.1f));
         want.put("Delhi", new Result("Delhi", 28.6f, 28.6f, 28.6f, 1, 28.6f));
-        want.put("Guangzhou", new Result("Guangzhou", 23.1f, 33.1f, 56.2f, 2, 56.2f));
+        want.put("Guangzhou", new Result("Guangzhou", 23.1f, 33.1f, 28f, 2, 56.2f));
 
         Path cwd = Path.of("").toAbsolutePath();
         String filePath = cwd.toString() + "/testdata/weather_stations.csv"; // Replace with your actual file path

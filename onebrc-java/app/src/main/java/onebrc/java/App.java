@@ -4,7 +4,6 @@
 package onebrc.java;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
@@ -15,7 +14,8 @@ public class App {
     }
 
     public static void main(String[] args) {
-        String filePath = "../data/weather_stations.csv"; // Replace with your actual file path
+//        String filePath = "../data/weather_stations.csv"; // Replace with your actual file path
+        String filePath = "../data/measurements.txt"; // Replace with your actual file path
 
         // Error handling in case the file doesn't exist or can't be read
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
@@ -49,7 +49,7 @@ public class App {
                     if (temp > res.getMax()) res.setMax(temp);
                     res.setTotal(res.getTotal() + temp);
                     res.setCount(res.getCount() + 1);
-                    res.setMean((float) (Math.round(res.getTotal() * 10.0) / 10.0));
+                    res.setMean((float) (Math.round(res.getTotal() * 10.0 / 10.0) / res.getCount()));
                     return res;
                 });
             }
