@@ -3,20 +3,45 @@
  */
 package onebrc.java;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.HashMap;
+
 public class App {
-    public String getGreeting() {
-        return "Hello World!";
+    public static String getGreeting() {
+        return "Hello";
     }
 
     public static void main(String[] args) {
-        System.out.println(new App().getGreeting());
-        showString();
+        String filePath = "../data/weather_stations.csv"; // Replace with your actual file path
+
+        // Error handling in case the file doesn't exist or can't be read
+        try (FileInputStream fileInputStream = new FileInputStream(filePath)) {
+            HashMap<String, Result> result = compute(fileInputStream);
+            System.out.println("Computation Result: " + result);
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+        }
     }
 
-    private static void showString() {
-        String s = "";
-        for (int i = 0; i < 100; i++) {
-            s += "hello";
+    // A method to perform computation on the file contents
+    public static HashMap<String, Result> compute(FileInputStream inputStream) {
+        int result = 0;
+
+        // Replace with your actual computation logic
+        // Example: Let's sum the byte values in the file
+        try {
+            int data;
+            while ((data = inputStream.read()) != -1) {
+                result += data;
+            }
+        } catch (IOException e) {
+            System.err.println("Error during computation: " + e.getMessage());
         }
+
+        HashMap<String, Result> results = new HashMap();
+        results.put("Hsinchu", new Result("Hsinchu", 0, 1, 2, 3, 3));
+
+        return results;
     }
 }

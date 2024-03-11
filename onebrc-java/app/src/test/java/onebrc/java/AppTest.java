@@ -4,11 +4,48 @@
 package onebrc.java;
 
 import org.junit.jupiter.api.Test;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.HashMap;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class AppTest {
-    @Test void appHasAGreeting() {
+    @Test
+    void appHasAGreeting() {
         App classUnderTest = new App();
         assertNotNull(classUnderTest.getGreeting(), "app should have a greeting");
+    }
+
+    @Test
+    void testCompute() {
+        App app = new App();
+
+        HashMap<String, Result> want = new HashMap<>();
+
+        want.put("Tokyo", new Result("Tokyo", 34.6f, 33.6f, 35.6f, 2, 69.37f));
+        want.put("Jakarta", new Result("Jakarta", -6.1f, -6.1f, -6.1f, 1, -6.1f));
+        want.put("Delhi", new Result("Delhi", 28.6f, 28.6f, 28.6f, 1, 28.6f));
+        want.put("Guangzhou", new Result("Guangzhou", 13.1f, 23.1f, 33.1f, 2, 34.1f));
+
+
+        Path cwd = Path.of("").toAbsolutePath();
+        String filePath = cwd.toString() + "/testdata/weather_stations.csv"; // Replace with your actual file path
+
+        // Error handling in case the file doesn't exist or can't be read
+        try (FileInputStream fileInputStream = new FileInputStream(filePath)) {
+            assertEquals(app.compute(fileInputStream), want);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+//        "Tokyo": { "count": 2, "max": 35.6897, "mean": 34.6897, "min": 33.6897, total: 69.3794 },
+//        "Jakarta": { "count": 1, "max": -6.175, "mean": -6.175, "min": -6.175, total: -6.175, },
+//        "Delhi": { "count": 1, "max": 28.61, "mean": 28.61, "min": 28.61, total: 28.61 },
+//        "Guangzhou": { "count": 2, "max": 43.13, "mean": 33.13, "min": 23.13, total: 66.26 }
     }
 }
