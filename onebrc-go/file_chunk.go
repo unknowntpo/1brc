@@ -44,12 +44,12 @@ func (fr *FileChunkReader) ReadAll() ([]byte, error) {
 	appendFn := func(dataBytes []byte) chunk {
 		return chunk{buf: bytes.NewBuffer(dataBytes)}
 	}
-	return newFunction(fr, appendFn)
+	return read(fr, appendFn)
 }
 
 type appendFn func(dataBytes []byte) chunk
 
-func newFunction(fr *FileChunkReader, fn appendFn) ([]byte, error) {
+func read(fr *FileChunkReader, fn appendFn) ([]byte, error) {
 	f, err := os.Open(fr.fileName)
 	defer f.Close()
 	if err != nil {
