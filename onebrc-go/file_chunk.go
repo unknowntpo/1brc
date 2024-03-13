@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"math"
 	"os"
@@ -45,10 +44,10 @@ func (fr *FileChunkReader) ReadAll() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(info.Size())
+	//fmt.Println(info.Size())
 	totalSize := info.Size()
 	numOfChunks := math.Ceil(float64(totalSize) / float64(CHUNK_SIZE))
-	fmt.Println("numOfChunks", numOfChunks)
+	//fmt.Println("numOfChunks", numOfChunks)
 
 	for i := 0; i < int(numOfChunks); i++ {
 		offset := i * CHUNK_SIZE
