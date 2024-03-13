@@ -41,6 +41,15 @@ func (fr *FileChunkReader) GetChunk(idx int) (chunk, error) {
 const CHUNK_SIZE = 8192
 
 func (fr *FileChunkReader) ReadAll() ([]byte, error) {
+	appendFn := func(dataBytes []byte) chunk {
+		return chunk{buf: bytes.NewBuffer(dataBytes)}
+	}
+	return newFunction(fr, appendFn)
+}
+
+type appendFn func(dataBytes []byte) chunk
+
+func newFunction(fr *FileChunkReader, fn appendFn) ([]byte, error) {
 	f, err := os.Open(fr.fileName)
 	defer f.Close()
 	if err != nil {
@@ -50,10 +59,10 @@ func (fr *FileChunkReader) ReadAll() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	//fmt.Println(info.Size())
+
 	totalSize := info.Size()
 	numOfChunks := int(math.Ceil(float64(totalSize) / float64(CHUNK_SIZE)))
-	//fmt.Println("numOfChunks", numOfChunks)
+
 	fr.chunks = make([]chunk, numOfChunks)
 
 	errChan := make(chan error, numOfChunks)
@@ -67,7 +76,7 @@ func (fr *FileChunkReader) ReadAll() ([]byte, error) {
 			defer wg.Done()
 
 			offset := i * CHUNK_SIZE
-			// What might go wrong ?
+
 			dataBytes := make([]byte, CHUNK_SIZE)
 			f, err := os.Open(fr.fileName)
 			defer f.Close()
@@ -91,7 +100,8 @@ func (fr *FileChunkReader) ReadAll() ([]byte, error) {
 			}
 			mu.Lock()
 			defer mu.Unlock()
-			fr.chunks[i] = chunk{buf: bytes.NewBuffer(dataBytes)}
+			// fr.chunks[i] = chunk{buf: bytes.NewBuffer(dataBytes)}
+			fr.chunks[i] = fn(dataBytes)
 			errChan <- nil
 		}(i)
 	}
