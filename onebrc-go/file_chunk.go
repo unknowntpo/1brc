@@ -6,22 +6,23 @@ import (
 	"io"
 	"math"
 	"os"
+	"sync"
 )
 
 type FileChunkReader struct {
 	// f is the underlining file that need to be read.
-	f      *os.File
-	chunks []chunk
+	fileName string
+	chunks   []chunk
 }
 
 type chunk struct {
 	buf *bytes.Buffer
 }
 
-func NewFileChunkReader(f *os.File) *FileChunkReader {
+func NewFileChunkReader(fileName string) *FileChunkReader {
 	return &FileChunkReader{
-		f:      f,
-		chunks: make([]chunk, 0, 100),
+		fileName: fileName,
+		chunks:   make([]chunk, 0, 100),
 	}
 }
 
@@ -40,7 +41,12 @@ func (fr *FileChunkReader) GetChunk(idx int) (chunk, error) {
 const CHUNK_SIZE = 8192
 
 func (fr *FileChunkReader) ReadAll() ([]byte, error) {
-	info, err := fr.f.Stat()
+	f, err := os.Open(fr.fileName)
+	defer f.Close()
+	if err != nil {
+		return nil, err
+	}
+	info, err := f.Stat()
 	if err != nil {
 		return nil, err
 	}
@@ -50,25 +56,58 @@ func (fr *FileChunkReader) ReadAll() ([]byte, error) {
 	//fmt.Println("numOfChunks", numOfChunks)
 	fr.chunks = make([]chunk, numOfChunks)
 
+	errChan := make(chan error, numOfChunks)
+
+	wg := &sync.WaitGroup{}
+	var mu sync.Mutex
 	for i := 0; i < numOfChunks; i++ {
-		offset := i * CHUNK_SIZE
-		// What might go wrong ?
-		dataBytes := make([]byte, CHUNK_SIZE)
-		n, err := fr.f.ReadAt(dataBytes, int64(offset))
-		if err != nil {
-			switch err {
-			case io.EOF:
-				break
-			default:
+		wg.Add(1)
+		go func(i int) {
+
+			defer wg.Done()
+
+			offset := i * CHUNK_SIZE
+			// What might go wrong ?
+			dataBytes := make([]byte, CHUNK_SIZE)
+			f, err := os.Open(fr.fileName)
+			defer f.Close()
+			if err != nil {
+				errChan <- err
+				return
+			}
+			n, err := f.ReadAt(dataBytes, int64(offset))
+			if err != nil {
+				switch err {
+				case io.EOF:
+					break
+				default:
+					errChan <- err
+					return
+				}
+			}
+			if n < CHUNK_SIZE {
+				// shrink the data
+				dataBytes = dataBytes[:n]
+			}
+			mu.Lock()
+			defer mu.Unlock()
+			fr.chunks[i] = chunk{buf: bytes.NewBuffer(dataBytes)}
+			errChan <- nil
+		}(i)
+	}
+
+	wg.Wait()
+
+	for i := 0; i < numOfChunks; i++ {
+		select {
+		case err := <-errChan:
+			if err != nil {
 				return nil, err
 			}
+		default:
 		}
-		if n < CHUNK_SIZE {
-			// shrink the data
-			dataBytes = dataBytes[:n]
-		}
-		fr.chunks[i] = chunk{buf: bytes.NewBuffer(dataBytes)}
 	}
+
 	var buf bytes.Buffer
 	for _, ck := range fr.chunks {
 		buf.WriteString(ck.buf.String())

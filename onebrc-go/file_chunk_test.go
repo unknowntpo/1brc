@@ -21,7 +21,7 @@ func TestFileChunkReader(t *testing.T) {
 
 				wantDataB, err := io.ReadAll(f)
 				require.NoError(t, err)
-				fr := NewFileChunkReader(f)
+				fr := NewFileChunkReader(fileName)
 				gotDataB, err := fr.ReadAll()
 				require.NoError(t, err)
 				assert.Equalf(t, string(wantDataB), string(gotDataB), "file: %s, incorrect data got from FileChunkReader", f.Name())
@@ -35,10 +35,8 @@ func BenchmarkFileChunkReader(b *testing.B) {
 	for _, fileName := range fileNames {
 		b.Run(fmt.Sprintf("read and print file content: %v", fileName), func(b *testing.B) {
 			for _, fileName := range fileNames {
-				f, err := os.Open(fileName)
-				require.NoError(b, err)
-				fr := NewFileChunkReader(f)
-				_, err = fr.ReadAll()
+				fr := NewFileChunkReader(fileName)
+				_, err := fr.ReadAll()
 				require.NoError(b, err)
 			}
 		})

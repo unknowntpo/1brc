@@ -18,7 +18,7 @@ help:
 ## test: execute tests
 .PHONY: test
 test:
-	@go test -v ./...
+	@go test -race -v ./...
 ## bench: execute benchmark
 .PHONY: bench
 bench:
