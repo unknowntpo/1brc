@@ -46,10 +46,11 @@ func (fr *FileChunkReader) ReadAll() ([]byte, error) {
 	}
 	//fmt.Println(info.Size())
 	totalSize := info.Size()
-	numOfChunks := math.Ceil(float64(totalSize) / float64(CHUNK_SIZE))
+	numOfChunks := int(math.Ceil(float64(totalSize) / float64(CHUNK_SIZE)))
 	//fmt.Println("numOfChunks", numOfChunks)
+	fr.chunks = make([]chunk, numOfChunks)
 
-	for i := 0; i < int(numOfChunks); i++ {
+	for i := 0; i < numOfChunks; i++ {
 		offset := i * CHUNK_SIZE
 		// What might go wrong ?
 		dataBytes := make([]byte, CHUNK_SIZE)
@@ -66,7 +67,7 @@ func (fr *FileChunkReader) ReadAll() ([]byte, error) {
 			// shrink the data
 			dataBytes = dataBytes[:n]
 		}
-		fr.chunks = append(fr.chunks, chunk{buf: bytes.NewBuffer(dataBytes)})
+		fr.chunks[i] = chunk{buf: bytes.NewBuffer(dataBytes)}
 	}
 	var buf bytes.Buffer
 	for _, ck := range fr.chunks {
