@@ -67,6 +67,13 @@ func main() {
 				},
 				Action: func(c *cli.Context) error {
 					filePath := c.String("file")
+					fr := NewFileChunkReader(filePath)
+					stream, errChan := fr.ReadStream()
+					for chunk := range stream {
+						_ = chunk
+					}
+					_ = must[error](nil, <-errChan)
+
 					f := must(os.Open(filePath))
 					defer f.Close()
 					scanner := bufio.NewScanner(bufio.NewReader(f))

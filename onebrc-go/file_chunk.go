@@ -126,7 +126,7 @@ func (fr *FileChunkReader) read(fn appendFn) error {
 				dataBytes = dataBytes[:n]
 			}
 			fr.chunks[i] = fn(dataBytes)
-			fmt.Println("read done for idx ", i)
+			// fmt.Println("read done for idx ", i)
 			return nil
 		})
 	}

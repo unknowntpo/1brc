@@ -22,4 +22,4 @@ test:
 ## bench: execute benchmark
 .PHONY: bench
 bench:
-	go test -v -short ./... -run=^$$ -bench=. 
+	go test -v -short ./... -run=^$$ -bench=. -cpuprofile cpu.out -memprofile mem.out
