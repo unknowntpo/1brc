@@ -3,16 +3,19 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"math"
 	"os"
-	"sync"
+
+	"golang.org/x/sync/errgroup"
 )
 
 type FileChunkReader struct {
 	// f is the underlining file that need to be read.
-	fileName string
-	chunks   []chunk
+	fileName      string
+	chunks        []chunk
+	afterReadHook func()
 }
 
 type chunk struct {
@@ -44,45 +47,70 @@ func (fr *FileChunkReader) ReadAll() ([]byte, error) {
 	appendFn := func(dataBytes []byte) chunk {
 		return chunk{buf: bytes.NewBuffer(dataBytes)}
 	}
-	return read(fr, appendFn)
+	if err := fr.read(appendFn); err != nil {
+		return nil, fmt.Errorf("failed to read from file: %v", err)
+	}
+	var buf bytes.Buffer
+	for _, ck := range fr.chunks {
+		buf.WriteString(ck.buf.String())
+	}
+	return buf.Bytes(), nil
 }
 
+func (fr *FileChunkReader) ReadStream() (<-chan chunk, <-chan error) {
+	ch := make(chan chunk, 20)
+	// FIXME: rename to read middleware fn ?
+	// FIXME: Who close the channel ?
+	appendFn := func(dataBytes []byte) chunk {
+		ck := chunk{buf: bytes.NewBuffer(dataBytes)}
+		ch <- ck
+		return ck
+	}
+	fr.afterReadHook = func() {
+		close(ch)
+	}
+	errChan := make(chan error)
+	go func() {
+		defer close(errChan)
+		if err := fr.read(appendFn); err != nil {
+			errChan <- fmt.Errorf("failed to read from file: %v", err)
+		}
+	}()
+	return ch, errChan
+}
+
+// appendFn is used to append chunk to FileChunkReader.chunks,
+// you can also customize some operation, such as make a channel and stream chunk to caller.
 type appendFn func(dataBytes []byte) chunk
 
-func read(fr *FileChunkReader, fn appendFn) ([]byte, error) {
+func (fr *FileChunkReader) read(fn appendFn) error {
 	f, err := os.Open(fr.fileName)
 	defer f.Close()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	info, err := f.Stat()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	totalSize := info.Size()
 	numOfChunks := int(math.Ceil(float64(totalSize) / float64(CHUNK_SIZE)))
+	fmt.Println("numofchunks", numOfChunks)
 
 	fr.chunks = make([]chunk, numOfChunks)
 
-	errChan := make(chan error, numOfChunks)
-
-	wg := &sync.WaitGroup{}
-	var mu sync.Mutex
+	group := new(errgroup.Group)
 	for i := 0; i < numOfChunks; i++ {
-		wg.Add(1)
-		go func(i int) {
-
-			defer wg.Done()
-
+		i := i
+		group.Go(func() error {
 			offset := i * CHUNK_SIZE
 
 			dataBytes := make([]byte, CHUNK_SIZE)
 			f, err := os.Open(fr.fileName)
 			defer f.Close()
 			if err != nil {
-				errChan <- err
-				return
+				return err
 			}
 			n, err := f.ReadAt(dataBytes, int64(offset))
 			if err != nil {
@@ -90,37 +118,29 @@ func read(fr *FileChunkReader, fn appendFn) ([]byte, error) {
 				case io.EOF:
 					break
 				default:
-					errChan <- err
-					return
+					return err
 				}
 			}
 			if n < CHUNK_SIZE {
 				// shrink the data
 				dataBytes = dataBytes[:n]
 			}
-			mu.Lock()
-			defer mu.Unlock()
-			// fr.chunks[i] = chunk{buf: bytes.NewBuffer(dataBytes)}
 			fr.chunks[i] = fn(dataBytes)
-			errChan <- nil
-		}(i)
+			fmt.Println("read done for idx ", i)
+			return nil
+		})
 	}
 
-	wg.Wait()
-
-	for i := 0; i < numOfChunks; i++ {
-		select {
-		case err := <-errChan:
-			if err != nil {
-				return nil, err
-			}
-		default:
-		}
+	// Wait for all HTTP fetches to complete.
+	if err := group.Wait(); err != nil {
+		return err
 	}
 
-	var buf bytes.Buffer
-	for _, ck := range fr.chunks {
-		buf.WriteString(ck.buf.String())
+	print("exec afterReadHook")
+	// executing afterReadHook
+	if fr.afterReadHook != nil {
+		fr.afterReadHook()
 	}
-	return buf.Bytes(), nil
+
+	return nil
 }
