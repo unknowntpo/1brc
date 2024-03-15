@@ -35,3 +35,8 @@ BenchmarkFileChunkReader/read_and_print_file_content:_./data/weather_stations.cs
 PASS
 ok      github.com/unknowntpo/1brc/onebrc-go    0.297s
 ```
+
+________________________________________________________
+Executed in  347.84 secs    fish           external
+   usr time  216.12 secs   59.00 micros  216.12 secs
+   sys time  179.62 secs  902.00 micros  179.62 secs
