@@ -70,6 +70,7 @@ func main() {
 					stream, errChan := fr.ReadStream()
 					for chunk := range stream {
 						_ = chunk
+						releaseChunk(&chunk)
 					}
 					_ = must[error](nil, <-errChan)
 					return nil

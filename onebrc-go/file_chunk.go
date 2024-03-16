@@ -113,7 +113,7 @@ func (fr *FileChunkReader) read(fn appendFn) error {
 
 	fr.chunks = make([]chunk, numOfChunks)
 
-	numOfWorkers := 8
+	numOfWorkers := 20
 	group := new(errgroup.Group)
 	for i := 0; i < numOfWorkers; i++ {
 		i := i
