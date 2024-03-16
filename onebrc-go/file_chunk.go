@@ -7,6 +7,7 @@ import (
 	"io"
 	"math"
 	"os"
+	"sync"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -20,6 +21,18 @@ type FileChunkReader struct {
 
 type chunk struct {
 	buf *bytes.Buffer
+}
+
+var chunkPool = sync.Pool{
+	New: func() any {
+		dataBytes := make([]byte, CHUNK_SIZE)
+		return &chunk{buf: bytes.NewBuffer(dataBytes)} // Return a pointer
+	},
+}
+
+func releaseChunk(c *chunk) {
+	c.buf.Reset() // Clear buffer for reuse
+	chunkPool.Put(c)
 }
 
 func NewFileChunkReader(fileName string) *FileChunkReader {
@@ -62,7 +75,7 @@ func (fr *FileChunkReader) ReadStream() (<-chan chunk, <-chan error) {
 	// FIXME: rename to read middleware fn ?
 	// FIXME: Who close the channel ?
 	appendFn := func(dataBytes []byte) chunk {
-		ck := chunk{buf: bytes.NewBuffer(dataBytes)}
+		ck := *(chunkPool.Get().(*chunk))
 		ch <- ck
 		return ck
 	}
