@@ -57,8 +57,8 @@ func (fr *FileChunkReader) GetChunk(idx int) (chunk, error) {
 const CHUNK_SIZE = 8192
 
 func (fr *FileChunkReader) ReadAll() ([]byte, error) {
-	appendFn := func(dataBytes []byte) chunk {
-		return chunk{buf: bytes.NewBuffer(dataBytes)}
+	appendFn := func(ck chunk) chunk {
+		return ck
 	}
 	if err := fr.read(appendFn); err != nil {
 		return nil, fmt.Errorf("failed to read from file: %v", err)
@@ -71,11 +71,10 @@ func (fr *FileChunkReader) ReadAll() ([]byte, error) {
 }
 
 func (fr *FileChunkReader) ReadStream() (<-chan chunk, <-chan error) {
-	ch := make(chan chunk, 20)
+	ch := make(chan chunk, 200)
 	// FIXME: rename to read middleware fn ?
 	// FIXME: Who close the channel ?
-	appendFn := func(dataBytes []byte) chunk {
-		ck := *(chunkPool.Get().(*chunk))
+	appendFn := func(ck chunk) chunk {
 		ch <- ck
 		return ck
 	}
@@ -94,7 +93,7 @@ func (fr *FileChunkReader) ReadStream() (<-chan chunk, <-chan error) {
 
 // appendFn is used to append chunk to FileChunkReader.chunks,
 // you can also customize some operation, such as make a channel and stream chunk to caller.
-type appendFn func(dataBytes []byte) chunk
+type appendFn func(ck chunk) chunk
 
 func (fr *FileChunkReader) read(fn appendFn) error {
 	f, err := os.Open(fr.fileName)
@@ -113,7 +112,7 @@ func (fr *FileChunkReader) read(fn appendFn) error {
 
 	fr.chunks = make([]chunk, numOfChunks)
 
-	numOfWorkers := 20
+	numOfWorkers := 200
 	group := new(errgroup.Group)
 	for i := 0; i < numOfWorkers; i++ {
 		i := i
@@ -122,11 +121,12 @@ func (fr *FileChunkReader) read(fn appendFn) error {
 			defer f.Close()
 			for c := i; c < numOfChunks; c += numOfWorkers {
 				offset := c * CHUNK_SIZE
-				dataBytes := make([]byte, CHUNK_SIZE)
+				// dataBytes := make([]byte, CHUNK_SIZE)
 				if err != nil {
 					return err
 				}
-				n, err := f.ReadAt(dataBytes, int64(offset))
+				ck := *(chunkPool.Get().(*chunk))
+				n, err := f.ReadAt(ck.buf.Bytes(), int64(offset))
 				if err != nil {
 					switch err {
 					case io.EOF:
@@ -137,9 +137,10 @@ func (fr *FileChunkReader) read(fn appendFn) error {
 				}
 				if n < CHUNK_SIZE {
 					// shrink the data
-					dataBytes = dataBytes[:n]
+					// dataBytes = dataBytes[:n]
+					ck.buf.Truncate(n)
 				}
-				fr.chunks[c] = fn(dataBytes)
+				fr.chunks[c] = fn(ck)
 				// fmt.Println("read done for idx ", i)
 			}
 			return nil
@@ -151,7 +152,6 @@ func (fr *FileChunkReader) read(fn appendFn) error {
 		return err
 	}
 
-	print("exec afterReadHook")
 	// executing afterReadHook
 	if fr.afterReadHook != nil {
 		fr.afterReadHook()

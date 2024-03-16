@@ -48,9 +48,17 @@ Executed in   77.38 secs    fish           external
    usr time   45.83 secs   58.00 micros   45.83 secs
    sys time   30.11 secs  922.00 micros   30.11 secs
 
-## Approach 2D: Run main program with sync.Pool and 8 workers
+## Approach 2D: Run main program with sync.Pool and 8 workers (this program does not PASS the test)
 
 ________________________________________________________
 Executed in   39.26 secs    fish           external
    usr time   11.40 secs   57.00 micros   11.40 secs
    sys time   47.99 secs  909.00 micros   47.99 secs
+
+
+## Approach 2E: Run main program with sync.Pool and 200 workers
+
+________________________________________________________
+Executed in    1.41 secs    fish           external
+   usr time    1.42 secs    0.09 millis    1.42 secs
+   sys time    1.35 secs    1.37 millis    1.35 secs

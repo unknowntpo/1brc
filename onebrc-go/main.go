@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"math"
 	"os"
 	"strconv"
@@ -68,11 +69,14 @@ func main() {
 					filePath := c.String("file")
 					fr := NewFileChunkReader(filePath)
 					stream, errChan := fr.ReadStream()
+					cnt := 0
 					for chunk := range stream {
 						_ = chunk
+						cnt++
 						releaseChunk(&chunk)
 					}
 					_ = must[error](nil, <-errChan)
+					fmt.Println("cnt: ", cnt)
 					return nil
 					// TODO: parse file
 					// f := must(os.Open(filePath))
