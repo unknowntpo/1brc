@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"math"
 	"os"
 	"strconv"
@@ -73,13 +72,14 @@ func main() {
 						_ = chunk
 					}
 					_ = must[error](nil, <-errChan)
-
-					f := must(os.Open(filePath))
-					defer f.Close()
-					scanner := bufio.NewScanner(bufio.NewReader(f))
-					m := must(compute(scanner))
-					fmt.Println(m)
 					return nil
+					// TODO: parse file
+					// f := must(os.Open(filePath))
+					// defer f.Close()
+					// scanner := bufio.NewScanner(bufio.NewReader(f))
+					// m := must(compute(scanner))
+					// fmt.Println(m)
+					// return nil
 				},
 			},
 		},

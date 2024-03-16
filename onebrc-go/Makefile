@@ -12,8 +12,15 @@ help:
 	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' |  sed -e 's/^/ /'
 
 # ==================================================================================== #
-# TEST
+# RUN
 # ==================================================================================== #
+
+
+## run: execute main program
+.PHONY: run
+run:
+	@go run . compute -f ../data/measurements.txt  
+
 
 ## test: execute tests
 .PHONY: test

@@ -100,33 +100,35 @@ func (fr *FileChunkReader) read(fn appendFn) error {
 
 	fr.chunks = make([]chunk, numOfChunks)
 
+	numOfWorkers := 8
 	group := new(errgroup.Group)
-	for i := 0; i < numOfChunks; i++ {
+	for i := 0; i < numOfWorkers; i++ {
 		i := i
 		group.Go(func() error {
-			offset := i * CHUNK_SIZE
-
-			dataBytes := make([]byte, CHUNK_SIZE)
 			f, err := os.Open(fr.fileName)
 			defer f.Close()
-			if err != nil {
-				return err
-			}
-			n, err := f.ReadAt(dataBytes, int64(offset))
-			if err != nil {
-				switch err {
-				case io.EOF:
-					break
-				default:
+			for c := i; c < numOfChunks; c += numOfWorkers {
+				offset := c * CHUNK_SIZE
+				dataBytes := make([]byte, CHUNK_SIZE)
+				if err != nil {
 					return err
 				}
+				n, err := f.ReadAt(dataBytes, int64(offset))
+				if err != nil {
+					switch err {
+					case io.EOF:
+						break
+					default:
+						return err
+					}
+				}
+				if n < CHUNK_SIZE {
+					// shrink the data
+					dataBytes = dataBytes[:n]
+				}
+				fr.chunks[c] = fn(dataBytes)
+				// fmt.Println("read done for idx ", i)
 			}
-			if n < CHUNK_SIZE {
-				// shrink the data
-				dataBytes = dataBytes[:n]
-			}
-			fr.chunks[i] = fn(dataBytes)
-			// fmt.Println("read done for idx ", i)
 			return nil
 		})
 	}
